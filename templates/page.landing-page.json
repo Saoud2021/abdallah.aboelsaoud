@@ -1,4 +1,14 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
+<<<<<<< HEAD
     "sections": {
         "main": {
             "type": "landing-page",
@@ -50,9 +60,65 @@
             ],
             "settings": {
               }
+=======
+  "sections": {
+    "main": {
+      "type": "landing-page",
+      "blocks": {
+        "product_bMpGQU": {
+          "type": "product",
+          "settings": {
+            "product": "black-leather-bag"
+          }
+        },
+        "product_kJdGFB": {
+          "type": "product",
+          "settings": {
+            "product": "blue-silk-tuxedo"
+          }
+        },
+        "product_nhRjXY": {
+          "type": "product",
+          "settings": {
+            "product": "chequered-red-shirt"
+          }
+        },
+        "product_jxNnMT": {
+          "type": "product",
+          "settings": {
+            "product": "classic-leather-jacket"
+          }
+        },
+        "product_TX4hW4": {
+          "type": "product",
+          "settings": {
+            "product": "classic-varsity-top"
+          }
+        },
+        "product_Trjnq9": {
+          "type": "product",
+          "settings": {
+            "product": "dark-denim-top"
+          }
+>>>>>>> 21c822195dd5e7583db177cab2d1182fb60ca995
         }
-    },
-    "order": [
-        "main"
-    ]
+      },
+      "block_order": [
+        "product_bMpGQU",
+        "product_kJdGFB",
+        "product_nhRjXY",
+        "product_jxNnMT",
+        "product_TX4hW4",
+        "product_Trjnq9"
+      ],
+      "settings": {
+        "title": "Tisso Vision",
+        "subtitle": "Find the ideal gift for your loved ones.",
+        "button_text": "Choose Gift"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
 }
