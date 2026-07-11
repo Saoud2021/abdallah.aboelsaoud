@@ -7,7 +7,12 @@
 
   <div class="hero-section">
     <div class="hero-top-image">
-      <img src="{{ 'hero-image.svg' | asset_url }}" alt="Hero bottom Image" width="600" height="400">
+      <img
+        src="{{ 'hero-image.svg' | asset_url }}"
+        alt="Festive hero illustration for gift guide showing wrapped presents and seasonal accents with inviting headline text"
+        width="600"
+        height="400"
+      >
     </div>
     <div class="hero-content">
       <h2 class="hero-title">The Gift Guide</h2>
@@ -18,7 +23,12 @@
       <button class="hero-button">Shop Now</button>
     </div>
     <div class="hero-bottom-image">
-      <img src="{{ 'hero-image.svg' | asset_url }}" alt="Hero bottom Image" width="600" height="400">
+      <img
+        src="{{ 'hero-image.svg' | asset_url }}"
+        alt="Secondary holiday-themed illustration with gift and lifestyle elements to support the gift guide"
+        width="600"
+        height="400"
+      >
     </div>
   </div>
   <div class="footer">
@@ -26,20 +36,49 @@
   </div>
 
   <div class="product-blocks">
-    <h3 class="product-blocks-title">Tisso vison in the wild</h3>
+    <h1 class="product-blocks-title">Tisso vison in the wild</h1>
     <div class="container">
       {% for block in section.blocks %}
         <div class="product-block">
           {% if block.settings.product %}
-          <button class="product-block-button">+</button>
+             <button
+              class="product-block-button"
+              type="button"
+              aria-label="Quick view {{ p.title | escape }}"
+              data-quick-view-trigger
+              data-title="{{ p.title | escape }}"
+              data-price="{{ p.price | money }}"
+              data-url="{{ p.url }}"
+              data-image="{% if p.featured_image %}{{ p.featured_image | image_url: width: 600 }}{% endif %}"
+            >+</button>
             <a href="{{ block.settings.product.url }}">
               <h3 class="product-block-title">{{ block.settings.product.title }}</h3>
+              {% if block.settings.product.featured_image %}
+                <img
+                  src="{{ block.settings.product.featured_image | image_url: width: 300, height: 300 }}"
+                  alt="{{ block.settings.product.featured_image.alt | default: block.settings.product.title }}"
+                  width="300"
+                  height="300"
+                >
+              {% else %}
+                {{ 'product-1' | placeholder_svg_tag: 'product-block-placeholder' }}
+              {% endif %}
             </a>
           {% endif %}
         </div>
       {% endfor %}
     </div>
   </div>
+  <div class="quick-view-modal" hidden>
+    <div class="quick-view-content">
+      <button class="quick-view-close" aria-label="Close quick view modal">&times;</button>
+        <h3 class="quick-view-title"></h3>
+        <p class="quick-view-price"></p>
+        <img class="quick-view-image" src="" alt="" width="300" height="300">
+        <a class="quick-view-link" href="">View Product</a>
+        <div class="color">{{ block.settings.product.color }} </div>
+        <div class="size">{{ block.settings.product.size }} </div>
+</div>
 </div>
 
 {% stylesheet %}
@@ -89,6 +128,7 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    padding: 20px;
   }
   .container {
     display: grid;
@@ -97,18 +137,32 @@
   }
 
   .product-block {
+    position: relative; /* ← add this: creates a positioning context */
     display: flex;
     flex-direction: column;
     justify-content: start;
     align-items: center;
     border-radius: 5px;
     width: 100%;
-    height: 100px;
-    background-color: #d1d1d1;
+    height:500px; /* ← give it a fixed height so "fills the block" means something */
     margin: 10px;
-    padding: 10px;
+    padding: 0; /* ← remove padding, or the image won't reach the edges */
+    overflow: hidden; /* ← clips the image to the rounded corners */
+  }
+  .product-block img {
+    position: absolute; /* ← pulls the image out of normal flow */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
   }
   .product-block-button {
+    position: absolute; /* ← pulls the button out of normal flow too */
+    top: 8px;
+    right: 8px;
+    z-index: 2; /* ← sits above the image */
     background-color: #ffffff;
     color: #000000;
     border: none;
@@ -117,6 +171,38 @@
     cursor: pointer;
   }
 {% endstylesheet %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const quickViewButtons = document.querySelectorAll('.product-block-button');
+    const quickViewModal = document.querySelector('.quick-view-modal');
+    const quickViewClose = document.querySelector('.quick-view-close');
+    const quickViewTitle = document.querySelector('.quick-view-title');
+    const quickViewPrice = document.querySelector('.quick-view-price');
+    const quickViewImage = document.querySelector('.quick-view-image');
+    const quickViewLink = document.querySelector('.quick-view-link');
+
+    quickViewButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const title = this.getAttribute('data-title');
+        const price = this.getAttribute('data-price');
+        const imageUrl = this.getAttribute('data-image');
+        const productUrl = this.getAttribute('data-url');
+
+        quickViewTitle.textContent = title;
+        quickViewPrice.textContent = price;
+        quickViewImage.src = imageUrl;
+        quickViewLink.href = productUrl;
+
+        quickViewModal.hidden = false;
+      });
+    });
+
+    quickViewClose.addEventListener('click', function() {
+      quickViewModal.hidden = true;
+    });
+  });
+  </script>
 
 {% schema %}
 {
