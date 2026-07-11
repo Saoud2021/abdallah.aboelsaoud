@@ -41,6 +41,8 @@
       {% for block in section.blocks %}
         <div class="product-block">
           {% if block.settings.product %}
+                        {% assign p = block.settings.product %}
+
              <button
               class="product-block-button"
               type="button"
@@ -51,12 +53,12 @@
               data-url="{{ p.url }}"
               data-image="{% if p.featured_image %}{{ p.featured_image | image_url: width: 600 }}{% endif %}"
             >+</button>
-            <a href="{{ block.settings.product.url }}">
-              <h3 class="product-block-title">{{ block.settings.product.title }}</h3>
-              {% if block.settings.product.featured_image %}
+            <a href="{{ p.url }}">
+              <h3 class="product-block-title">{{ p.title }}</h3>
+              {% if p.featured_image %}
                 <img
-                  src="{{ block.settings.product.featured_image | image_url: width: 300, height: 300 }}"
-                  alt="{{ block.settings.product.featured_image.alt | default: block.settings.product.title }}"
+                  src="{{ p.featured_image | image_url: width: 300, height: 300 }}"
+                  alt="{{ p.featured_image.alt | default: p.title }}"
                   width="300"
                   height="300"
                 >
@@ -75,9 +77,9 @@
         <h3 class="quick-view-title"></h3>
         <p class="quick-view-price"></p>
         <img class="quick-view-image" src="" alt="" width="300" height="300">
-        <a class="quick-view-link" href="">View Product</a>
-        <div class="color">{{ block.settings.product.color }} </div>
-        <div class="size">{{ block.settings.product.size }} </div>
+        <div class="color">{{ p.selected_or_first_available_variant.option1 }}</div>
+        <div class="size">{{ p.selected_or_first_available_variant.option2 }}</div>
+        <button class="quick-view-add-to-cart">Add to Cart</button>
 </div>
 </div>
 
@@ -170,38 +172,117 @@
     padding: 3px 7px;
     cursor: pointer;
   }
+   /* --- Quick view popup --- */
+  .quick-view-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .quick-view-overlay[hidden] {
+    display: none;
+  }
+  .quick-view-modal {
+    position: relative;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 85vh;
+    overflow-y: auto;
+    text-align: center;
+  }
+  .quick-view-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .quick-view-image {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+  .quick-view-price {
+    font-weight: 600;
+    margin: 8px 0 12px;
+  }
+  .quick-view-color,
+  .quick-view-size {
+    font-size: 14px;
+    color: #555;
+  }
+  .quick-view-link {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: #000000;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 4px;
+  }
 {% endstylesheet %}
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const quickViewButtons = document.querySelectorAll('.product-block-button');
-    const quickViewModal = document.querySelector('.quick-view-modal');
-    const quickViewClose = document.querySelector('.quick-view-close');
-    const quickViewTitle = document.querySelector('.quick-view-title');
-    const quickViewPrice = document.querySelector('.quick-view-price');
-    const quickViewImage = document.querySelector('.quick-view-image');
-    const quickViewLink = document.querySelector('.quick-view-link');
+ (function () {
+    // Scope to this specific section instance, so multiple copies of this
+    // section on one page don't share (and fight over) the same modal.
+    var root = document.currentScript.closest('.landing-page');
+    if (!root) return;
 
-    quickViewButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const title = this.getAttribute('data-title');
-        const price = this.getAttribute('data-price');
-        const imageUrl = this.getAttribute('data-image');
-        const productUrl = this.getAttribute('data-url');
+    var container = root.querySelector('[data-quick-view-container]');
+    var overlay = root.querySelector('[data-quick-view-overlay]');
+    var img = root.querySelector('[data-quick-view-image]');
+    var titleEl = root.querySelector('[data-quick-view-title]');
+    var priceEl = root.querySelector('[data-quick-view-price]');
+    var colorEl = root.querySelector('[data-quick-view-color]');
+    var sizeEl = root.querySelector('[data-quick-view-size]');
+    var link = root.querySelector('[data-quick-view-link]');
+    var closeBtn = root.querySelector('[data-quick-view-close]');
 
-        quickViewTitle.textContent = title;
-        quickViewPrice.textContent = price;
-        quickViewImage.src = imageUrl;
-        quickViewLink.href = productUrl;
+    function openPopup(trigger) {
+      img.src = trigger.dataset.image || '';
+      img.alt = trigger.dataset.title || '';
+      titleEl.textContent = trigger.dataset.title || '';
+      priceEl.textContent = trigger.dataset.price || '';
+      colorEl.textContent = trigger.dataset.color ? 'Color: ' + trigger.dataset.color : '';
+      sizeEl.textContent = trigger.dataset.size ? 'Size: ' + trigger.dataset.size : '';
+      link.href = trigger.dataset.url || '#';
+      overlay.hidden = false;
+    }
 
-        quickViewModal.hidden = false;
-      });
+    function closePopup() {
+      overlay.hidden = true;
+    }
+
+    // ONE listener on the container, delegated to every current AND future
+    // .product-block-button — this is what survives theme-editor re-renders.
+    container.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-quick-view-trigger]');
+      if (!trigger) return;
+      event.preventDefault();
+      openPopup(trigger);
     });
 
-    quickViewClose.addEventListener('click', function() {
-      quickViewModal.hidden = true;
+    closeBtn.addEventListener('click', closePopup);
+
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) closePopup();
     });
-  });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !overlay.hidden) closePopup();
+    });
+  })();
   </script>
 
 {% schema %}
