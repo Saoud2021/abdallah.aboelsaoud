@@ -17,8 +17,11 @@
     <div class="hero-content">
       <h1 class="hero-title">The Gift Guide</h1>
       <p class="hero-description">
-        Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts
-        to delight your loved ones this holiday season.
+        <span class="text-full"
+          >Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect
+          gifts to delight your loved ones this holiday season.</span
+        >
+        <span class="text-short">Discover Joy: Your Ultimate Holiday Gift Destination.</span>
       </p>
       <button class="hero-button btn-sweep">Shop Now</button>
     </div>
@@ -31,14 +34,15 @@
       >
     </div>
   </div>
-  <div class="footer">
-    <p class="footer-text">SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL</p>
-  </div>
+  <p class="footer-text">
+    <span class="text-full">SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL</span>
+    <span class="text-short">SUSTAINABLE, ETHICALLY MADE CLOTHES AND ACTIVEWEAR</span>
+  </p>
 
   <div class="product-blocks">
     <h1 class="product-blocks-title">Tisso vison in the wild</h1>
 
-    <!-- data-quick-view-container-->
+    <!-- data-quick-view-container -->
     <div class="container" data-quick-view-container>
       {% for block in section.blocks %}
         <div class="product-block">
@@ -88,7 +92,9 @@
               data-description="{{ p.description | strip_html | truncate: 140 | escape }}"
               data-options="{{ options_json | strip_newlines | escape }}"
               data-variants="{{ variants_json | strip_newlines | escape }}"
-            >+</button>
+            >
+              +
+            </button>
             <a href="{{ p.url }}">
               <h3 class="product-block-title">{{ p.title }}</h3>
               {% if p.featured_image %}
@@ -108,12 +114,6 @@
     </div>
   </div>
 
-  {%- comment -%}
-    Hidden auto-add rule: pick which product/variant should be silently
-    added to the cart whenever a shopper selects Black + Medium on any
-    product in this section. Configurable in the theme editor so it isn't
-    hardcoded to one SKU.
-  {%- endcomment -%}
   {% assign auto_add_product = section.settings.auto_add_product %}
   {% if section.settings.auto_add_variant_id != blank %}
     {% assign auto_add_variant_id = section.settings.auto_add_variant_id %}
@@ -208,13 +208,12 @@
     width: 100%;
     height: auto;
   }
-  .hero-content{
+  .hero-content {
     display: flex;
     flex-direction: column;
     justify-content: start;
     text-align: left;
     padding: 10px 20px;
-  
   }
   .hero-bottom-image img {
     width: 100%;
@@ -374,11 +373,11 @@
     cursor: pointer;
     transition: box-shadow 0.15s ease, border-color 0.15s ease;
   }
-  .quick-view-swatch[data-selected="true"] {
+  .quick-view-swatch[data-selected='true'] {
     border-color: #000000;
     box-shadow: 0 0 0 1px #000000;
   }
-  .quick-view-swatch[data-unavailable="true"] {
+  .quick-view-swatch[data-unavailable='true'] {
     opacity: 0.35;
     cursor: not-allowed;
     text-decoration: line-through;
@@ -391,7 +390,9 @@
     width: 100%;
     appearance: none;
     -webkit-appearance: none;
-    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    background: #ffffff
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+      no-repeat right 12px center;
     background-size: 16px;
     border: 1px solid #cfcfcf;
     border-radius: 3px;
@@ -444,7 +445,7 @@
   /* --- Yellow → black left-to-right sweep on buttons --- */
   .btn-sweep {
     position: relative;
-    isolation: isolate;   /* keeps the sweep contained to this button's own stacking context */
+    isolation: isolate; /* keeps the sweep contained to this button's own stacking context */
     overflow: hidden;
     background-color: #f5d300;
     color: #000000;
@@ -462,7 +463,7 @@
     height: 100%;
     width: 0%;
     background-color: #000000;
-    z-index: -1;           /* paints above this button's own background, below its text */
+    z-index: -1; /* paints above this button's own background, below its text */
     transition: width 0.35s ease;
   }
   .btn-sweep:hover,
@@ -472,6 +473,71 @@
   .btn-sweep:hover::before,
   .btn-sweep:focus-visible::before {
     width: 100%;
+  }
+
+  .text-short {
+    display: none;
+  }
+  .text-full {
+    display: inline;
+  }
+  @media (max-width: 768px) {
+    .text-full {
+      display: none;
+    }
+    .text-short {
+      display: inline;
+    }
+
+    .hero-section {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .hero-top-image {
+      display: none;
+    }
+    .hero-bottom-image img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .landing-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      flex-direction: column;
+    }
+    .landing-page-subtitle {
+      display: none;
+    }
+    .landing-page-button {
+      display: none;
+    }
+    .container {
+      grid-template-columns: 1fr 1fr;
+      margin: 0;
+      padding: 0;
+    }
+    .container img {
+      width: 100%;
+      height: auto;
+    }
+    .product-block {
+      width: 150px;
+      height: 150px;
+    }
+    .quick-view-modal {
+      width: 95%;
+      max-width: 300px;
+    }
+    .hero-title,
+    .hero-description,
+    .product-blocks-title {
+      text-align: center;
+      font-weight: 500;
+    }
   }
 {% endstylesheet %}
 <script src="{{ 'landing-page.js' | asset_url }}" defer></script>
