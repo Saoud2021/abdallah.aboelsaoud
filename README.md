@@ -40,7 +40,10 @@ s/landing-page.png)
 1. Store preview: https://abdallah-aboelsaud-48-teststore.myshopify.com/pages/landing-page
    - **Password protected** — password: `abdallahaboelsaud123`
 2. Source code: https://github.com/Saoud2021/abdallah.aboelsaoud
-3. Or pull the theme locally via Shopify CLI:
+3. time doctor :
+ - password :cAaWmBcrV9!bavh
+ - User : abdallah.aboelsaoud@gmail.com
+4. Or pull the theme locally via Shopify CLI:
    ```bash
    shopify theme pull --store abdallah-aboelsaud-48-teststore.myshopify.com
    ```
