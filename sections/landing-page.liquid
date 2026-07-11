@@ -2,7 +2,7 @@
   <div class="landing-header">
     <h1 class="landing-page-title">{{ section.settings.title }}</h1>
     <p class="landing-page-subtitle">{{ section.settings.subtitle }}</p>
-    <button class="landing-page-button">{{ section.settings.button_text }}</button>
+    <button class="landing-page-button btn-sweep">{{ section.settings.button_text }}</button>
   </div>
 
   <div class="hero-section">
@@ -15,12 +15,12 @@
       >
     </div>
     <div class="hero-content">
-      <h2 class="hero-title">The Gift Guide</h2>
+      <h1 class="hero-title">The Gift Guide</h1>
       <p class="hero-description">
         Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts
         to delight your loved ones this holiday season.
       </p>
-      <button class="hero-button">Shop Now</button>
+      <button class="hero-button btn-sweep">Shop Now</button>
     </div>
     <div class="hero-bottom-image">
       <img
@@ -37,21 +37,57 @@
 
   <div class="product-blocks">
     <h1 class="product-blocks-title">Tisso vison in the wild</h1>
-    <div class="container">
+
+    <!-- data-quick-view-container-->
+    <div class="container" data-quick-view-container>
       {% for block in section.blocks %}
         <div class="product-block">
           {% if block.settings.product %}
-                        {% assign p = block.settings.product %}
+            {% assign p = block.settings.product %}
 
-             <button
+            {%- comment -%}
+              Build the full variant list as JSON so the popup can be truly
+              variant-aware (price / image / availability per color+size),
+              instead of only remembering the first available variant.
+              option_names tells the JS which option index (1/2/3) is
+              "Color" and which is "Size", so this keeps working even if a
+              merchant reorders the product options.
+            {%- endcomment -%}
+            {% capture variants_json %}
+              [
+                {% for variant in p.variants %}
+                  {
+                    "id": {{ variant.id | json }},
+                    "option1": {{ variant.option1 | json }},
+                    "option2": {{ variant.option2 | json }},
+                    "option3": {{ variant.option3 | json }},
+                    "available": {{ variant.available | json }},
+                    "price": {{ variant.price | money | json }},
+                    "image": {% if variant.featured_image %}{{ variant.featured_image | image_url: width: 600 | json }}{% else %}null{% endif %}
+                  }{% unless forloop.last %},{% endunless %}
+                {% endfor %}
+              ]
+            {% endcapture %}
+            {% capture options_json %}
+              [
+                {% for option in p.options_with_values %}
+                  {{ option.name | json }}{% unless forloop.last %},{% endunless %}
+                {% endfor %}
+              ]
+            {% endcapture %}
+
+            <button
               class="product-block-button"
               type="button"
               aria-label="Quick view {{ p.title | escape }}"
               data-quick-view-trigger
               data-title="{{ p.title | escape }}"
-              data-price="{{ p.price | money }}"
+              data-price="{{ p.selected_or_first_available_variant.price | money }}"
               data-url="{{ p.url }}"
               data-image="{% if p.featured_image %}{{ p.featured_image | image_url: width: 600 }}{% endif %}"
+              data-description="{{ p.description | strip_html | truncate: 140 | escape }}"
+              data-options="{{ options_json | strip_newlines | escape }}"
+              data-variants="{{ variants_json | strip_newlines | escape }}"
             >+</button>
             <a href="{{ p.url }}">
               <h3 class="product-block-title">{{ p.title }}</h3>
@@ -71,19 +107,77 @@
       {% endfor %}
     </div>
   </div>
-  <div class="quick-view-modal" hidden>
-    <div class="quick-view-content">
-      <button class="quick-view-close" aria-label="Close quick view modal">&times;</button>
-        <h3 class="quick-view-title"></h3>
-        <p class="quick-view-price"></p>
-        <img class="quick-view-image" src="" alt="" width="300" height="300">
-        <div class="color">{{ p.selected_or_first_available_variant.option1 }}</div>
-        <div class="size">{{ p.selected_or_first_available_variant.option2 }}</div>
-        <button class="quick-view-add-to-cart">Add to Cart</button>
-</div>
+
+  {%- comment -%}
+    Hidden auto-add rule: pick which product/variant should be silently
+    added to the cart whenever a shopper selects Black + Medium on any
+    product in this section. Configurable in the theme editor so it isn't
+    hardcoded to one SKU.
+  {%- endcomment -%}
+  {% assign auto_add_product = section.settings.auto_add_product %}
+  {% if section.settings.auto_add_variant_id != blank %}
+    {% assign auto_add_variant_id = section.settings.auto_add_variant_id %}
+  {% elsif auto_add_product %}
+    {% assign auto_add_variant_id = auto_add_product.selected_or_first_available_variant.id %}
+  {% endif %}
+
+  <!-- Shared popup: outer overlay (backdrop) wraps the inner modal card -->
+  <div
+    class="quick-view-overlay"
+    data-quick-view-overlay
+    data-auto-add-variant-id="{{ auto_add_variant_id }}"
+    data-auto-add-color="black"
+    data-auto-add-size="medium"
+    hidden
+  >
+    <div class="quick-view-modal" role="dialog" aria-modal="true" aria-labelledby="quick-view-title-{{ section.id }}">
+      <button class="quick-view-close" type="button" data-quick-view-close aria-label="Close">&times;</button>
+
+      <div class="product-info">
+        <img class="quick-view-image" data-quick-view-image src="" alt="">
+        <div class="product-info-details">
+          <h3 class="quick-view-title" id="quick-view-title-{{ section.id }}" data-quick-view-title></h3>
+          <p class="quick-view-price" data-quick-view-price></p>
+          <p class="quick-view-description" data-quick-view-description></p>
+        </div>
+      </div>
+
+      <div class="quick-view-option-group">
+        <p class="quick-view-option-label">Color</p>
+        <div class="quick-view-color" data-quick-view-color></div>
+      </div>
+
+      <div class="quick-view-option-group">
+        <p class="quick-view-option-label">Size</p>
+        <div class="quick-view-select-wrap">
+          <select class="quick-view-size" data-quick-view-size>
+            <option value="">Choose your size</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="quick-view-stock-msg" data-quick-view-stock-msg hidden></p>
+
+      <button class="quick-view-add-to-cart" type="button" data-quick-view-atc disabled>
+        <span data-quick-view-atc-label>Select options</span>
+        <span class="quick-view-atc-arrow" aria-hidden="true">&#8594;</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 {% stylesheet %}
+  @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300&family=Lustria&display=swap');
+
+  .landing-page {
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+  }
+
+  .quick-view-price {
+    font-family: 'Lustria', serif;
+  }
+
   .landing-page {
     display: flex;
     flex-direction: column;
@@ -114,6 +208,14 @@
     width: 100%;
     height: auto;
   }
+  .hero-content{
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    text-align: left;
+    padding: 10px 20px;
+  
+  }
   .hero-bottom-image img {
     width: 100%;
     height: auto;
@@ -139,20 +241,20 @@
   }
 
   .product-block {
-    position: relative; /* ← add this: creates a positioning context */
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: start;
     align-items: center;
     border-radius: 5px;
     width: 100%;
-    height:500px; /* ← give it a fixed height so "fills the block" means something */
+    height: 500px;
     margin: 10px;
-    padding: 0; /* ← remove padding, or the image won't reach the edges */
-    overflow: hidden; /* ← clips the image to the rounded corners */
+    padding: 0;
+    overflow: hidden;
   }
   .product-block img {
-    position: absolute; /* ← pulls the image out of normal flow */
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -161,10 +263,10 @@
     z-index: 1;
   }
   .product-block-button {
-    position: absolute; /* ← pulls the button out of normal flow too */
+    position: absolute;
     top: 8px;
     right: 8px;
-    z-index: 2; /* ← sits above the image */
+    z-index: 2;
     background-color: #ffffff;
     color: #000000;
     border: none;
@@ -172,7 +274,8 @@
     padding: 3px 7px;
     cursor: pointer;
   }
-   /* --- Quick view popup --- */
+
+  /* --- Quick view popup --- */
   .quick-view-overlay {
     position: fixed;
     inset: 0;
@@ -186,105 +289,192 @@
     display: none;
   }
   .quick-view-modal {
+    display: flex;
+    flex-direction: column;
     position: relative;
     background: #ffffff;
     border-radius: 8px;
-    padding: 24px;
+    padding: 28px 24px 24px;
     width: 90%;
-    max-width: 400px;
+    max-width: 380px;
     max-height: 85vh;
     overflow-y: auto;
-    text-align: center;
+    text-align: left;
   }
   .quick-view-close {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 10px;
+    right: 12px;
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 22px;
     line-height: 1;
     cursor: pointer;
+    color: #444;
+  }
+
+  /* Image left, title/price/description right */
+  .product-info {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 20px;
   }
   .quick-view-image {
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-    margin-bottom: 16px;
+    width: 110px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: #f2f2f2;
+  }
+  .product-info-details {
+    display: flex;
+    flex-direction: column;
+  }
+  .quick-view-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0 0 4px;
   }
   .quick-view-price {
-    font-weight: 600;
-    margin: 8px 0 12px;
-  }
-  .quick-view-color,
-  .quick-view-size {
     font-size: 14px;
-    color: #555;
+    font-weight: 400;
+    margin: 0 0 8px;
   }
-  .quick-view-link {
-    display: inline-block;
-    margin-top: 16px;
-    padding: 10px 20px;
-    background: #000000;
+  .quick-view-description {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #666;
+    margin: 0;
+  }
+
+  /* Color + size groups */
+  .quick-view-option-group {
+    margin-bottom: 16px;
+  }
+  .quick-view-option-label {
+    font-size: 13px;
+    color: #555;
+    margin: 0 0 8px;
+  }
+
+  .quick-view-color {
+    display: flex;
+    gap: 10px;
+  }
+  .quick-view-swatch {
+    flex: 1;
+    padding: 12px 10px;
+    text-align: center;
+    font-size: 14px;
+    border: 1px solid #cfcfcf;
+    border-radius: 3px;
+    background: #ffffff;
+    color: #111111;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .quick-view-swatch[data-selected="true"] {
+    border-color: #000000;
+    box-shadow: 0 0 0 1px #000000;
+  }
+  .quick-view-swatch[data-unavailable="true"] {
+    opacity: 0.35;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+
+  .quick-view-select-wrap {
+    position: relative;
+  }
+  .quick-view-size {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    background-size: 16px;
+    border: 1px solid #cfcfcf;
+    border-radius: 3px;
+    padding: 12px 36px 12px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #111111;
+    cursor: pointer;
+  }
+  .quick-view-size:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+  }
+
+  .quick-view-stock-msg {
+    font-size: 12px;
+    color: #b3261e;
+    margin: -8px 0 12px;
+  }
+
+  /* Full width black Add to Cart with arrow, matching the mockup */
+  .quick-view-add-to-cart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background-color: #000000;
     color: #ffffff;
-    text-decoration: none;
+    border: none;
+    border-radius: 3px;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .quick-view-add-to-cart:disabled {
+    background-color: #cfcfcf;
+    color: #888888;
+    cursor: not-allowed;
+  }
+  .quick-view-atc-arrow {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* --- Yellow → black left-to-right sweep on buttons --- */
+  .btn-sweep {
+    position: relative;
+    isolation: isolate;   /* keeps the sweep contained to this button's own stacking context */
+    overflow: hidden;
+    background-color: #f5d300;
+    color: #000000;
+    border: none;
+    cursor: pointer;
+    padding: 12px 24px;
     border-radius: 4px;
+    transition: color 0.35s ease;
+  }
+  .btn-sweep::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background-color: #000000;
+    z-index: -1;           /* paints above this button's own background, below its text */
+    transition: width 0.35s ease;
+  }
+  .btn-sweep:hover,
+  .btn-sweep:focus-visible {
+    color: #ffffff;
+  }
+  .btn-sweep:hover::before,
+  .btn-sweep:focus-visible::before {
+    width: 100%;
   }
 {% endstylesheet %}
-
-<script>
- (function () {
-    // Scope to this specific section instance, so multiple copies of this
-    // section on one page don't share (and fight over) the same modal.
-    var root = document.currentScript.closest('.landing-page');
-    if (!root) return;
-
-    var container = root.querySelector('[data-quick-view-container]');
-    var overlay = root.querySelector('[data-quick-view-overlay]');
-    var img = root.querySelector('[data-quick-view-image]');
-    var titleEl = root.querySelector('[data-quick-view-title]');
-    var priceEl = root.querySelector('[data-quick-view-price]');
-    var colorEl = root.querySelector('[data-quick-view-color]');
-    var sizeEl = root.querySelector('[data-quick-view-size]');
-    var link = root.querySelector('[data-quick-view-link]');
-    var closeBtn = root.querySelector('[data-quick-view-close]');
-
-    function openPopup(trigger) {
-      img.src = trigger.dataset.image || '';
-      img.alt = trigger.dataset.title || '';
-      titleEl.textContent = trigger.dataset.title || '';
-      priceEl.textContent = trigger.dataset.price || '';
-      colorEl.textContent = trigger.dataset.color ? 'Color: ' + trigger.dataset.color : '';
-      sizeEl.textContent = trigger.dataset.size ? 'Size: ' + trigger.dataset.size : '';
-      link.href = trigger.dataset.url || '#';
-      overlay.hidden = false;
-    }
-
-    function closePopup() {
-      overlay.hidden = true;
-    }
-
-    // ONE listener on the container, delegated to every current AND future
-    // .product-block-button — this is what survives theme-editor re-renders.
-    container.addEventListener('click', function (event) {
-      var trigger = event.target.closest('[data-quick-view-trigger]');
-      if (!trigger) return;
-      event.preventDefault();
-      openPopup(trigger);
-    });
-
-    closeBtn.addEventListener('click', closePopup);
-
-    overlay.addEventListener('click', function (event) {
-      if (event.target === overlay) closePopup();
-    });
-
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && !overlay.hidden) closePopup();
-    });
-  })();
-  </script>
-
+<script src="{{ 'landing-page.js' | asset_url }}" defer></script>
 {% schema %}
 {
   "name": "Landing Page",
@@ -307,6 +497,22 @@
       "id": "button_text",
       "label": "Button Text",
       "default": "Choose Gift"
+    },
+    {
+      "type": "header",
+      "content": "Hidden auto-add rule"
+    },
+    {
+      "type": "product",
+      "id": "auto_add_product",
+      "label": "Auto-add product",
+      "info": "Silently added to cart whenever a shopper selects Black + Medium in the quick view popup."
+    },
+    {
+      "type": "text",
+      "id": "auto_add_variant_id",
+      "label": "Auto-add variant ID (optional)",
+      "info": "Leave blank to use the product's first available variant."
     }
   ],
   "blocks": [
