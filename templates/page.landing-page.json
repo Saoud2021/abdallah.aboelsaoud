@@ -2,10 +2,54 @@
     "sections": {
         "main": {
             "type": "landing-page",
+            "blocks": {
+                "block_1": {
+                    "type": "product",
+                    "settings": {
+                        "product": "blue-silk-tuxedo"
+                    }
+                },
+                "block_2": {
+                    "type": "product",
+                    "settings": {
+                        "product": "chequered-red-shirt"
+                    }
+                },
+                "block_3": {
+                    "type": "product",
+                    "settings": {
+                        "product": "classic-varsity-top"
+                    }
+                },
+                "block_4": {
+                    "type": "product",
+                    "settings": {
+                        "product": "dark-denim-top"
+                    }
+                },
+                "block_5": {
+                    "type": "product",
+                    "settings": {
+                        "product": "floral-white-top"
+                    }
+                },
+                "block_6": {
+                    "type": "product",
+                    "settings": {
+                        "product": "black-leather-bag"
+                    }
+                }
+            },
+            "block_order": [
+                "block_1",
+                "block_2",
+                "block_3",
+                "block_4",
+                "block_5",
+                "block_6"
+            ],
             "settings": {
-                "padding_top": 28,
-                "padding_bottom": 28
-            }
+              }
         }
     },
     "order": [
