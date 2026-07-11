@@ -1,0 +1,66 @@
+<div class="landing page">
+  <div class="header">
+    <h1 class="landing-page-title">{{ section.settings.title }}</h1>
+    <p class="landing-page-subtitle">{{ section.settings.subtitle }}</p>
+    <button class="landing-page-button">{{ section.settings.button_text }}</button>
+  </div>
+
+  <div class="hero-section">
+    <div class="hero-top-image">
+      <img src="{{ section.settings.hero_image | image_url }}" alt="Hero Image" width="600" height="400">
+    </div>
+    <div class="hero-content">
+      <h2 class="hero-title">The Gift Guide</h2>
+      <p class="hero-description">
+        Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts
+        to delight your loved ones this holiday season.
+      </p>
+      <button class="hero-button">Shop Now</button>
+      <div class="hero-bottom-image">
+        {% if section.settings.hero_image != blank %}
+          <img src="{{ section.settings.hero_image | image_url }}" alt="Hero bottom Image" width="600" height="400">
+        {% endif %}
+      </div>
+    </div>
+    <div class="footer">
+      <p class="footer-text">SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL</p>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .landing-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Landing Page",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero image"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "landing_page_block",
+      "name": "Landing Page Block",
+      "settings": [
+        {
+          "type": "page",
+          "id": "page",
+          "label": "Page"
+        }
+      ]
+    }
+  ],
+  "presets": []
+}
+{% endschema %}
